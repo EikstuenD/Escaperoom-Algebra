@@ -3,41 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Operasjon Svart Skjerm v2.0</title>
+    <title>Operasjon Svart Skjerm v3.0</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="scanlines"></div>
 
-    <div class="terminal">
+    <!-- STARTSKJERM / LOGIN -->
+    <div id="start-screen" class="overlay active">
+        <div class="modal">
+            <h1>> SIKKERHETSSJEKK</h1>
+            <p>Velg ditt ferdighetsnivå for å starte operasjonen:</p>
+            <div class="difficulty-buttons">
+                <button onclick="startGame(1)">REKRUTT<br><span style="font-size:0.7em">(Lettere)</span></button>
+                <button onclick="startGame(2)">HACKER<br><span style="font-size:0.7em">(Vanskeligere)</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SPILL-OMRÅDE -->
+    <div class="terminal" id="game-terminal" style="display:none;">
         <header>
             <h1>> OPERASJON_SVART_SKJERM</h1>
             <div id="status-bar">
                 <span>TID: <span id="timer">20:00</span></span> | 
                 <span id="level-indicator">Nivå: 1/5</span>
             </div>
+            <!-- Progress bar for hele spillet -->
             <div class="progress-bar"><div id="progress-fill"></div></div>
+            
+            <!-- Progress for NÅVÆRENDE nivå (7 oppgaver) -->
+            <div class="sub-progress">
+                System-hack: <span id="sub-progress-text">0/7</span> fullført
+            </div>
         </header>
 
-        <div id="log-console">> Kobler til server... <span class="cursor">_</span></div>
+        <div id="log-console">> System initialisert. Venter på input... <span class="cursor">_</span></div>
 
-        <!-- Dette området endres dynamisk av JavaScript -->
         <section id="game-area" class="room active">
-            <h2 id="level-title">Nivå 1: Initialisering</h2>
+            <h2 id="level-title">Nivå 1</h2>
             
             <div class="task" id="question-text">
-                Laster inn data...
+                Laster data...
             </div>
 
-            <input type="number" id="user-input" placeholder="Din kode" onkeydown="handleEnter(event)">
-            <button onclick="checkAnswer()">SEND KODE</button>
+            <input type="number" id="user-input" placeholder="Kode" onkeydown="handleEnter(event)">
+            <button onclick="checkAnswer()">SEND</button>
         </section>
 
-        <!-- Seier-skjerm -->
+        <!-- SEIER -->
         <section id="victory" class="room">
             <h2 style="color: white; text-shadow: 0 0 10px white;">SYSTEM SIKRET</h2>
-            <p>Dere har knekket alle kodene og reddet serverparken!</p>
+            <p>Utmerket arbeid, agent. Alle servere er reddet.</p>
             <div class="badge">🏆🔓</div>
             <button onclick="location.reload()">NY OPERASJON</button>
         </section>
