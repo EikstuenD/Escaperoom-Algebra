@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Operasjon Svart Skjerm v5.0</title>
+    <title>Operasjon Svart Skjerm v6.0</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,10 +22,10 @@
         </div>
     </div>
 
-    <!-- HOVEDSPILL-WRAPPER (Holder terminal og lås side om side) -->
+    <!-- HOVEDSPILL -->
     <div class="game-wrapper" id="game-wrapper" style="display:none;">
         
-        <!-- VENSTRE SIDE: TERMINALEN -->
+        <!-- VENSTRE: TERMINAL -->
         <div class="terminal">
             <header>
                 <h1>> OPERASJON_SVART_SKJERM</h1>
@@ -34,10 +34,10 @@
                     <span id="level-indicator">Nivå: 1/5</span>
                 </div>
                 <div class="progress-bar"><div id="progress-fill"></div></div>
-                <div class="sub-progress">System-hack: <span id="sub-progress-text">0/7</span></div>
+                <div class="sub-progress">Progresjon: <span id="sub-progress-text">0/7</span></div>
             </header>
 
-            <div id="log-console">> Venter på input... <span class="cursor">_</span></div>
+            <div id="log-console">> Kobler til sikkerhetsmodul... <span class="cursor">_</span></div>
 
             <section id="game-area" class="room active">
                 <h2 id="level-title">Nivå 1</h2>
@@ -47,31 +47,74 @@
             </section>
         </div>
 
-        <!-- HØYRE SIDE: LÅSEMEKANISMEN -->
+        <!-- HØYRE: LÅSEMEKANISMER (Endres per nivå) -->
         <div class="lock-panel">
-            <div class="lock-header">SERVER_LOCK_V4</div>
-            <div class="gear-container" id="gear-box">
-                <!-- Tannhjul 1 (Stor) -->
-                <svg class="gear g1" viewBox="0 0 24 24"><path fill="#00ff41" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,13L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.04 4.95,18.95L7.44,17.95C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.95L19.05,18.95C19.27,19.04 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" /></svg>
-                
-                <!-- Tannhjul 2 (Medium - griper i 1) -->
-                <svg class="gear g2" viewBox="0 0 24 24"><path fill="#00ff41" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,13L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.04 4.95,18.95L7.44,17.95C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.95L19.05,18.95C19.27,19.04 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" /></svg>
-                
-                <!-- Tannhjul 3 (Liten - griper i 2) -->
-                <svg class="gear g3" viewBox="0 0 24 24"><path fill="#00ff41" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,13L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.04 4.95,18.95L7.44,17.95C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.95L19.05,18.95C19.27,19.04 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" /></svg>
-                
-                <!-- Tannhjul 4 (Liten - griper i 1) -->
-                <svg class="gear g4" viewBox="0 0 24 24"><path fill="#00ff41" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,13L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.04 4.95,18.95L7.44,17.95C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.95L19.05,18.95C19.27,19.04 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" /></svg>
+            <div class="lock-header" id="lock-header">SIKKERHETSLÅS</div>
+            
+            <!-- NIVÅ 1: DIGITAL KEYPAD -->
+            <div id="lock-level-1" class="lock-mechanism active">
+                <div class="keypad-screen" id="keypad-screen">ACCESS LOCKED</div>
+                <div class="keypad-grid">
+                    <div>1</div><div>2</div><div>3</div>
+                    <div>4</div><div>5</div><div>6</div>
+                    <div>7</div><div>8</div><div>9</div>
+                    <div>*</div><div>0</div><div>#</div>
+                </div>
             </div>
-            <div class="lock-status">STATUS: <span id="lock-state">LÅST</span></div>
+
+            <!-- NIVÅ 2: ANALOG SAFE -->
+            <div id="lock-level-2" class="lock-mechanism">
+                <div class="safe-outer">
+                    <div class="safe-dial" id="safe-dial">
+                        <div class="dial-notch"></div>
+                    </div>
+                </div>
+                <div class="safe-lights">
+                    <div class="led" id="sl-1"></div><div class="led" id="sl-2"></div>
+                    <div class="led" id="sl-3"></div><div class="led" id="sl-4"></div>
+                    <div class="led" id="sl-5"></div><div class="led" id="sl-6"></div>
+                    <div class="led" id="sl-7"></div>
+                </div>
+            </div>
+
+            <!-- NIVÅ 3: SERVER RACK -->
+            <div id="lock-level-3" class="lock-mechanism">
+                <div class="server-rack">
+                    <div class="server-slot" id="srv-1"></div>
+                    <div class="server-slot" id="srv-2"></div>
+                    <div class="server-slot" id="srv-3"></div>
+                    <div class="server-slot" id="srv-4"></div>
+                    <div class="server-slot" id="srv-5"></div>
+                    <div class="server-slot" id="srv-6"></div>
+                    <div class="server-slot" id="srv-7"></div>
+                </div>
+            </div>
+
+            <!-- NIVÅ 4: MATRIX GRID -->
+            <div id="lock-level-4" class="lock-mechanism">
+                <div class="matrix-grid" id="matrix-grid">
+                    <!-- Fylles med JS -->
+                </div>
+            </div>
+
+            <!-- NIVÅ 5: REACTOR CORE -->
+            <div id="lock-level-5" class="lock-mechanism">
+                <div class="core-container">
+                    <div class="core-ring outer" id="core-outer"></div>
+                    <div class="core-ring inner" id="core-inner"></div>
+                    <div class="core-center" id="core-center">0%</div>
+                </div>
+            </div>
+
+            <div class="lock-status">STATUS: <span id="lock-status-text" style="color:red">LÅST</span></div>
         </div>
     </div>
 
-    <!-- SEIER SKJERM (Ligger skjult) -->
+    <!-- SEIER -->
     <div id="victory" class="overlay">
         <div class="modal">
-            <h2 style="color: white; text-shadow: 0 0 10px white;">SYSTEM SIKRET</h2>
-            <p>Utmerket arbeid, agent. Alle servere er reddet.</p>
+            <h2 style="color: white; text-shadow: 0 0 10px white;">ACCESS GRANTED</h2>
+            <p>Systemet er fullstendig hacket og reddet!</p>
             <div class="badge">🏆🔓</div>
             <button onclick="location.reload()">NY OPERASJON</button>
         </div>
