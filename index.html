@@ -3,87 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Operasjon Svart Skjerm</title>
+    <title>Operasjon Svart Skjerm v2.0</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="scanlines"></div> <!-- Kul TV-effekt -->
+    <div class="scanlines"></div>
 
     <div class="terminal">
         <header>
             <h1>> OPERASJON_SVART_SKJERM</h1>
             <div id="status-bar">
-                <span>TID IGJEN: <span id="timer">15:00</span></span> | 
-                <span id="progress-text">0% fullført</span>
+                <span>TID: <span id="timer">20:00</span></span> | 
+                <span id="level-indicator">Nivå: 1/5</span>
             </div>
             <div class="progress-bar"><div id="progress-fill"></div></div>
         </header>
 
-        <div id="log-console">> Systemet venter på input... <span class="cursor">_</span></div>
+        <div id="log-console">> Kobler til server... <span class="cursor">_</span></div>
 
-        <!-- Nivå 1 -->
-        <section id="level1" class="room active">
-            <h2>Nivå 1: Variabel-analyse</h2>
-            <div class="task">
-                Hvis a = 15 og b = -4<br>
-                Hva blir 2a + b?
+        <!-- Dette området endres dynamisk av JavaScript -->
+        <section id="game-area" class="room active">
+            <h2 id="level-title">Nivå 1: Initialisering</h2>
+            
+            <div class="task" id="question-text">
+                Laster inn data...
             </div>
-            <input type="number" id="input1" placeholder="Svar" onkeydown="handleEnter(event, 1)">
-            <button onclick="checkLevel(1)">KJØR KODE</button>
+
+            <input type="number" id="user-input" placeholder="Din kode" onkeydown="handleEnter(event)">
+            <button onclick="checkAnswer()">SEND KODE</button>
         </section>
 
-        <!-- Nivå 2 -->
-        <section id="level2" class="room">
-            <h2>Nivå 2: Parentes-fellen</h2>
-            <div class="task">
-                Regn ut verdien når x = 7:<br>
-                3(x + 2) - 2x
-            </div>
-            <input type="number" id="input2" placeholder="Svar" onkeydown="handleEnter(event, 2)">
-            <button onclick="checkLevel(2)">KJØR KODE</button>
-        </section>
-
-        <!-- Nivå 3 -->
-        <section id="level3" class="room">
-            <h2>Nivå 3: X-faktoren</h2>
-            <div class="task">
-                4x - 8 = 2x + 12<br>
-                Finn verdien av x.
-            </div>
-            <input type="number" id="input3" placeholder="Svar" onkeydown="handleEnter(event, 3)">
-            <button onclick="checkLevel(3)">KJØR KODE</button>
-        </section>
-
-        <!-- Nivå 4 -->
-        <section id="level4" class="room">
-            <h2>Nivå 4: Logikk-knekkeren</h2>
-            <div class="task">
-                Jeg tenker på et tall x. Hvis jeg dobler tallet og legger til 10, får jeg 40.<br>
-                Hvilket tall er x?
-            </div>
-            <input type="number" id="input4" placeholder="Svar" onkeydown="handleEnter(event, 4)">
-            <button onclick="checkLevel(4)">KJØR KODE</button>
-        </section>
-
-        <!-- Nivå 5 -->
-        <section id="level5" class="room">
-            <h2>Nivå 5: Geometri-koden</h2>
-            <div class="task">
-                En rektangulær serverpark har omkrets på 30 meter.<br>
-                Den lengste siden er x + 5. Den korteste siden er x.<br>
-                Hva er verdien til x?
-            </div>
-            <input type="number" id="input5" placeholder="Svar" onkeydown="handleEnter(event, 5)">
-            <button onclick="checkLevel(5)">DEKRYPTER</button>
-        </section>
-
-        <!-- Seier -->
+        <!-- Seier-skjerm -->
         <section id="victory" class="room">
-            <h2 style="color: white; text-shadow: 0 0 10px white;">ACCESS GRANTED</h2>
-            <p>Systemet er reddet! Dere har bevist deres algebra-ferdigheter.</p>
-            <div class="badge">💻🔓</div>
-            <button onclick="location.reload()">SPILL IGJEN</button>
+            <h2 style="color: white; text-shadow: 0 0 10px white;">SYSTEM SIKRET</h2>
+            <p>Dere har knekket alle kodene og reddet serverparken!</p>
+            <div class="badge">🏆🔓</div>
+            <button onclick="location.reload()">NY OPERASJON</button>
         </section>
     </div>
 
