@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operasjon Kodeknekk: Algebra</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>SYSTEM LOCKDOWN: ALGEBRA</h1>
+            <p id="status-text">Skolen er låst. Finn variablene for å låse opp systemet.</p>
+        </header>
+
+        <section id="room1" class="room active">
+            <h2>Rom 1: Variabel-detektiven</h2>
+            <p>For å åpne den første døren må du finne verdien av uttrykket:</p>
+            <div class="task">
+                <p>Hvis $a = 12$ og $b = 5$, hva er da $a - b + 3$?</p>
+            </div>
+            <input type="number" id="input1" placeholder="Skriv kode...">
+            <button onclick="checkLevel1()">Lås opp</button>
+        </section>
+
+        <section id="room2" class="room">
+            <h2>Rom 2: Mønster-koden</h2>
+            <p>Systemet krever det neste tallet i tallfølgen for å fortsette:</p>
+            <div class="task">
+                <p>$3, 7, 11, 15, \dots$</p>
+                <p>Hvilket tall kommer som nummer 6 i denne rekken?</p>
+            </div>
+            <input type="number" id="input2" placeholder="Skriv kode...">
+            <button onclick="checkLevel2()">Lås opp</button>
+        </section>
+
+        <section id="room3" class="room">
+            <h2>Rom 3: X-faktoren</h2>
+            <p>Siste dør! Løs ligningen for å reboote systemet:</p>
+            <div class="task">
+                <p>$2x + 4 = 16$</p>
+                <p>Hva er verdien til $x$?</p>
+            </div>
+            <input type="number" id="input3" placeholder="Skriv kode...">
+            <button onclick="checkLevel3()">Fullfør oppdrag</button>
+        </section>
+
+        <section id="victory" class="room">
+            <h2 class="success">SYSTEM REBOOTED!</h2>
+            <p>Gratulerer, agenter! Dere har knekt algebra-koden og reddet skolen.</p>
+            <div class="badge">🏆</div>
+            <button onclick="location.reload()">Spill igjen</button>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
