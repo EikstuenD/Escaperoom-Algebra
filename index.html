@@ -3,22 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Operasjon Svart Skjerm v6.0</title>
+    <title>Operasjon Svart Skjerm v7.0</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <!-- BAKGRUNN: MATRIX REGN -->
+    <canvas id="matrix-bg"></canvas>
     <div class="scanlines"></div>
 
-    <!-- STARTSKJERM -->
+    <!-- STARTSKJERM & AVATAR -->
     <div id="start-screen" class="overlay active">
         <div class="modal">
             <h1>> SIKKERHETSSJEKK</h1>
-            <p>Velg ditt ferdighetsnivå:</p>
+            <p>Identifiser deg, agent:</p>
+            <input type="text" id="avatar-input" placeholder="Ditt kodenavn..." maxlength="15">
+            
+            <p style="margin-top:20px">Velg oppdrag:</p>
             <div class="difficulty-buttons">
                 <button onclick="startGame(1)">REKRUTT<br><span style="font-size:0.7em">(Lettere)</span></button>
                 <button onclick="startGame(2)">HACKER<br><span style="font-size:0.7em">(Vanskeligere)</span></button>
             </div>
+            <p style="font-size: 0.8em; color: #666; margin-top: 10px;">⚠️ Lyd aktiveres ved start</p>
+        </div>
+    </div>
+
+    <!-- BRANNMUR (Random Event) -->
+    <div id="firewall-modal" class="overlay">
+        <div class="modal alarm-mode">
+            <h1 class="blink">⚠️ BRANNMUR DETECTED ⚠️</h1>
+            <p>Sikkerhetssystemet angriper! Løs koden raskt!</p>
+            <div class="firewall-task" id="firewall-task">5 + 5</div>
+            <input type="number" id="firewall-input" placeholder="Svar..." onkeydown="handleFirewallEnter(event)">
+            <div class="countdown-bar"><div id="fw-timer-bar"></div></div>
         </div>
     </div>
 
@@ -28,83 +45,57 @@
         <!-- VENSTRE: TERMINAL -->
         <div class="terminal">
             <header>
-                <h1>> OPERASJON_SVART_SKJERM</h1>
+                <h1>> <span id="agent-name-display">AGENT</span>_TERMINAL</h1>
                 <div id="status-bar">
                     <span>TID: <span id="timer">20:00</span></span> | 
                     <span id="level-indicator">Nivå: 1/5</span>
                 </div>
                 <div class="progress-bar"><div id="progress-fill"></div></div>
-                <div class="sub-progress">Progresjon: <span id="sub-progress-text">0/7</span></div>
+                <div class="sub-progress">
+                    Progresjon: <span id="sub-progress-text">0/7</span>
+                    <span id="combo-badge" style="display:none">🔥 COMBO!</span>
+                </div>
             </header>
 
-            <div id="log-console">> Kobler til sikkerhetsmodul... <span class="cursor">_</span></div>
+            <div id="log-console">> Venter på input... <span class="cursor">_</span></div>
 
             <section id="game-area" class="room active">
                 <h2 id="level-title">Nivå 1</h2>
-                <div class="task" id="question-text">Laster...</div>
-                <input type="number" id="user-input" placeholder="Kode" onkeydown="handleEnter(event)">
-                <button onclick="checkAnswer()">SEND</button>
+                
+                <!-- Oppgaveboks -->
+                <div class="task-container">
+                    <div class="task" id="question-text">Laster...</div>
+                    <button id="hint-btn" onclick="useHint()">[ HINT: -60s ]</button>
+                </div>
+                <div id="hint-text" style="display:none; color: yellow; margin-bottom: 10px; font-size: 0.9em;"></div>
+
+                <div class="input-group">
+                    <input type="number" id="user-input" placeholder="Kode" onkeydown="handleEnter(event)">
+                    <button onclick="checkAnswer()">SEND</button>
+                </div>
             </section>
         </div>
 
-        <!-- HØYRE: LÅSEMEKANISMER (Endres per nivå) -->
+        <!-- HØYRE: LÅSEMEKANISMER -->
         <div class="lock-panel">
             <div class="lock-header" id="lock-header">SIKKERHETSLÅS</div>
             
-            <!-- NIVÅ 1: DIGITAL KEYPAD -->
+            <!-- Inkluderer låsene fra forrige versjon -->
             <div id="lock-level-1" class="lock-mechanism active">
-                <div class="keypad-screen" id="keypad-screen">ACCESS LOCKED</div>
-                <div class="keypad-grid">
-                    <div>1</div><div>2</div><div>3</div>
-                    <div>4</div><div>5</div><div>6</div>
-                    <div>7</div><div>8</div><div>9</div>
-                    <div>*</div><div>0</div><div>#</div>
-                </div>
+                <div class="keypad-screen" id="keypad-screen">LOCKED</div>
+                <div class="keypad-grid"><div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div><div>7</div><div>8</div><div>9</div><div>*</div><div>0</div><div>#</div></div>
             </div>
-
-            <!-- NIVÅ 2: ANALOG SAFE -->
+            
             <div id="lock-level-2" class="lock-mechanism">
-                <div class="safe-outer">
-                    <div class="safe-dial" id="safe-dial">
-                        <div class="dial-notch"></div>
-                    </div>
-                </div>
-                <div class="safe-lights">
-                    <div class="led" id="sl-1"></div><div class="led" id="sl-2"></div>
-                    <div class="led" id="sl-3"></div><div class="led" id="sl-4"></div>
-                    <div class="led" id="sl-5"></div><div class="led" id="sl-6"></div>
-                    <div class="led" id="sl-7"></div>
-                </div>
+                <div class="safe-outer"><div class="safe-dial" id="safe-dial"><div class="dial-notch"></div></div></div>
+                <div class="safe-lights"><div class="led" id="sl-1"></div><div class="led" id="sl-2"></div><div class="led" id="sl-3"></div><div class="led" id="sl-4"></div><div class="led" id="sl-5"></div><div class="led" id="sl-6"></div><div class="led" id="sl-7"></div></div>
             </div>
 
-            <!-- NIVÅ 3: SERVER RACK -->
-            <div id="lock-level-3" class="lock-mechanism">
-                <div class="server-rack">
-                    <div class="server-slot" id="srv-1"></div>
-                    <div class="server-slot" id="srv-2"></div>
-                    <div class="server-slot" id="srv-3"></div>
-                    <div class="server-slot" id="srv-4"></div>
-                    <div class="server-slot" id="srv-5"></div>
-                    <div class="server-slot" id="srv-6"></div>
-                    <div class="server-slot" id="srv-7"></div>
-                </div>
-            </div>
+            <div id="lock-level-3" class="lock-mechanism"><div class="server-rack"><div class="server-slot" id="srv-1"></div><div class="server-slot" id="srv-2"></div><div class="server-slot" id="srv-3"></div><div class="server-slot" id="srv-4"></div><div class="server-slot" id="srv-5"></div><div class="server-slot" id="srv-6"></div><div class="server-slot" id="srv-7"></div></div></div>
 
-            <!-- NIVÅ 4: MATRIX GRID -->
-            <div id="lock-level-4" class="lock-mechanism">
-                <div class="matrix-grid" id="matrix-grid">
-                    <!-- Fylles med JS -->
-                </div>
-            </div>
+            <div id="lock-level-4" class="lock-mechanism"><div class="matrix-grid" id="matrix-grid"></div></div>
 
-            <!-- NIVÅ 5: REACTOR CORE -->
-            <div id="lock-level-5" class="lock-mechanism">
-                <div class="core-container">
-                    <div class="core-ring outer" id="core-outer"></div>
-                    <div class="core-ring inner" id="core-inner"></div>
-                    <div class="core-center" id="core-center">0%</div>
-                </div>
-            </div>
+            <div id="lock-level-5" class="lock-mechanism"><div class="core-container"><div class="core-ring outer" id="core-outer"></div><div class="core-ring inner" id="core-inner"></div><div class="core-center" id="core-center">0%</div></div></div>
 
             <div class="lock-status">STATUS: <span id="lock-status-text" style="color:red">LÅST</span></div>
         </div>
@@ -114,9 +105,10 @@
     <div id="victory" class="overlay">
         <div class="modal">
             <h2 style="color: white; text-shadow: 0 0 10px white;">ACCESS GRANTED</h2>
-            <p>Systemet er fullstendig hacket og reddet!</p>
+            <p>Gratulerer, <span id="winner-name">Agent</span>!</p>
+            <p>Systemet er reddet.</p>
             <div class="badge">🏆🔓</div>
-            <button onclick="location.reload()">NY OPERASJON</button>
+            <button onclick="location.reload()">NYTT OPPDRAG</button>
         </div>
     </div>
 
