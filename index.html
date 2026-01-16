@@ -11,77 +11,71 @@
     <div class="terminal">
         <header>
             <h1>> OPERASJON_SVART_SKJERM</h1>
-            <div class="stats">
-                <span>TID IGJEN: <span id="timer">15:00</span></span>
-                <span>STATUS: <span id="progress-text">0% fullført</span></span>
+            <div id="status-bar">
+                <span>TID IGJEN: <span id="timer">15:00</span></span> | 
+                <span id="progress-text">0% fullført</span>
             </div>
             <div class="progress-bar"><div id="progress-fill"></div></div>
         </header>
 
-        <div id="log-console">> Venter på dekryptering...</div>
+        <div id="log-console">> Systemet venter på input...</div>
 
         <section id="level1" class="room active">
             <h2>Nivå 1: Variabel-analyse</h2>
-            <p>Systemet er låst med to variabler. Finn summen.</p>
             <div class="task">
                 Hvis a = 15 og b = -4<br>
                 Hva blir 2a + b?
             </div>
-            <input type="number" id="input1" placeholder="Skriv svar...">
+            <input type="number" id="input1" placeholder="Svar">
             <button onclick="checkLevel(1, 26)">KJØR KODE</button>
         </section>
 
         <section id="level2" class="room">
             <h2>Nivå 2: Parentes-fellen</h2>
-            <p>Vannmåleren på skolen er hacket. Løs uttrykket for å stoppe lekkasjen:</p>
             <div class="task">
                 Regn ut verdien når x = 7:<br>
                 3(x + 2) - 2x
             </div>
-            <input type="number" id="input2" placeholder="Skriv svar...">
+            <input type="number" id="input2" placeholder="Svar">
             <button onclick="checkLevel(2, 13)">KJØR KODE</button>
         </section>
 
         <section id="level3" class="room">
             <h2>Nivå 3: X-faktoren</h2>
-            <p>Sentralbordet krever verdien av x for å åpne brannmuren:</p>
             <div class="task">
                 4x - 8 = 2x + 12<br>
                 Finn verdien av x.
             </div>
-            <input type="number" id="input3" placeholder="Skriv svar...">
+            <input type="number" id="input3" placeholder="Svar">
             <button onclick="checkLevel(3, 10)">KJØR KODE</button>
         </section>
 
         <section id="level4" class="room">
             <h2>Nivå 4: Logikk-knekkeren</h2>
-            <p>En kryptert melding sier:</p>
             <div class="task">
-                "Jeg tenker på et tall x. Hvis jeg dobler tallet og legger til 10, får jeg 40."<br>
-                Hvilket tall tenker jeg på?
+                Jeg tenker på et tall x. Hvis jeg dobler tallet og legger til 10, får jeg 40.<br>
+                Hvilket tall er x?
             </div>
-            <input type="number" id="input4" placeholder="Skriv svar...">
+            <input type="number" id="input4" placeholder="Svar">
             <button onclick="checkLevel(4, 15)">KJØR KODE</button>
         </section>
 
         <section id="level5" class="room">
             <h2>Nivå 5: Geometri-koden</h2>
-            <p>Siste barriere! En rektangulær serverpark har omkrets på 30 meter.</p>
             <div class="task">
-                Den lengste siden er x + 5.<br>
-                Den korteste siden er x.<br>
-                Hva er verdien til x? (Husk: Omkrets = summen av alle fire sider)
+                En rektangulær serverpark har omkrets på 30 meter.<br>
+                Den lengste siden er x + 5. Den korteste siden er x.<br>
+                Hva er verdien til x?
             </div>
-            <input type="number" id="input5" placeholder="Skriv svar...">
-            <button onclick="checkLevel(5, 5)">DEKRYPTER SYSTEMET</button>
+            <input type="number" id="input5" placeholder="Svar">
+            <button onclick="checkLevel(5, 5)">DEKRYPTER</button>
         </section>
 
         <section id="victory" class="room">
-            <h2 class="success">ACCESS GRANTED</h2>
-            <p>Du har reddet skolen fra det digitale viruset!</p>
+            <h2 style="color: white;">ACCESS GRANTED</h2>
+            <p>Systemet er reddet! Dere har bevist deres algebra-ferdigheter.</p>
             <div class="badge">💻🔓</div>
-            <p id="final-time"></p>
-            <button onclick="location.reload()">START PÅ NYTT</button>
+            <button onclick="location.reload()">SPILL IGJEN</button>
         </section>
     </div>
 
