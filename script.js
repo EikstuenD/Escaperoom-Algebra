@@ -7,246 +7,397 @@ let difficulty = 1;
 let currentAnswer = 0;
 let timeLeft = 1200; 
 let timerInterval;
-const vars = ['x', 'y', 'a', 'b', 'n', 'k', 'z']; 
+let combo = 0;
+let agentName = "AGENT";
+let isDebugTask = false; // Hvis true, er oppgaven "finn feilen"
+
+// --- AUDIO MOTOR (Synthesizer) ---
+// Lager lyd uten eksterne filer!
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(type) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+    
+    if (type === 'type') { // Tastetrykk
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(800, now);
+        gainNode.gain.setValueAtTime(0.05, now);
+        osc.start(now);
+        osc.stop(now + 0.05);
+    } else if (type === 'correct') { // Riktig svar
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+        gainNode.gain.setValueAtTime(0.2, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+    } else if (type === 'wrong') { // Feil svar
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+        gainNode.gain.setValueAtTime(0.2, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+    } else if (type === 'alarm') { // Brannmur
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.linearRampToValueAtTime(600, now + 0.1);
+        gainNode.gain.setValueAtTime(0.3, now);
+        osc.start(now);
+        osc.stop(now + 0.2);
+    } else if (type === 'win') { // Seier
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.linearRampToValueAtTime(600, now + 0.2);
+        osc.frequency.linearRampToValueAtTime(400, now + 0.4);
+        osc.frequency.linearRampToValueAtTime(800, now + 0.6);
+        gainNode.gain.setValueAtTime(0.2, now);
+        gainNode.gain.linearRampToValueAtTime(0, now + 1.5);
+        osc.start(now);
+        osc.stop(now + 1.5);
+    }
+}
+
+// --- MATRIX BAKGRUNN ---
+const canvas = document.getElementById('matrix-bg');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+const letters = "0101XYHAZK";
+const fontSize = 16;
+const columns = canvas.width / fontSize;
+const drops = Array(Math.floor(columns)).fill(1);
+let matrixColor = "#00ff41"; // Grønn standard
+
+function drawMatrix() {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = matrixColor;
+    ctx.font = fontSize + "px monospace";
+    for (let i = 0; i < drops.length; i++) {
+        const text = letters[Math.floor(Math.random() * letters.length)];
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+    }
+    requestAnimationFrame(drawMatrix);
+}
+
+// --- SPILL LOGIKK ---
+const vars = ['x', 'y', 'a', 'b', 'n']; 
 let rotation = 0; // For safen
 
-// HTML-elementer
-let timerElement, logElement, questionText, levelTitle, inputField, levelIndicator, progressBar, subProgressText, gameWrapper, startScreen, lockStatusText;
-
 window.onload = function() {
-    timerElement = document.getElementById('timer');
-    logElement = document.getElementById('log-console');
-    questionText = document.getElementById('question-text');
-    levelTitle = document.getElementById('level-title');
-    inputField = document.getElementById('user-input');
-    levelIndicator = document.getElementById('level-indicator');
-    progressBar = document.getElementById('progress-fill');
-    subProgressText = document.getElementById('sub-progress-text');
-    gameWrapper = document.getElementById('game-wrapper');
-    startScreen = document.getElementById('start-screen');
-    lockStatusText = document.getElementById('lock-status-text');
-
-    // Initialiser Matrix Grid (Nivå 4)
-    const matrixGrid = document.getElementById('matrix-grid');
-    const chars = "01XH7A";
-    for(let i=0; i<16; i++) {
-        let div = document.createElement('div');
-        div.innerText = chars[Math.floor(Math.random()*chars.length)];
-        div.classList.add('matrix-char');
-        div.id = `mtx-${i}`;
-        matrixGrid.appendChild(div);
+    drawMatrix();
+    // Start Matrix-låsen med tegn
+    const mg = document.getElementById('matrix-grid');
+    for(let i=0; i<16; i++){
+        let d = document.createElement('div');
+        d.className = 'matrix-char';
+        d.innerText = "0";
+        mg.appendChild(d);
     }
 };
 
 window.startGame = function(selectedDifficulty) {
+    const nameInput = document.getElementById('avatar-input').value;
+    if(nameInput.trim() !== "") agentName = nameInput.toUpperCase();
+    document.getElementById('agent-name-display').innerText = agentName;
+    document.getElementById('winner-name').innerText = agentName;
+
     difficulty = selectedDifficulty;
-    startScreen.classList.remove('active');
-    gameWrapper.style.display = 'flex';
+    document.getElementById('start-screen').classList.remove('active');
+    document.getElementById('game-wrapper').style.display = 'flex';
+    
+    // Aktiver lyd
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    
     startTimer();
     updateUI();
-    updateLockVisuals(true); // Vis riktig lås for nivå 1
+    updateLockVisuals(true);
     generateQuestion();
-    inputField.focus();
-}
-
-function updateLockVisuals(newLevel) {
-    // 1. Skjul alle låser
-    document.querySelectorAll('.lock-mechanism').forEach(el => el.classList.remove('active'));
+    document.getElementById('user-input').focus();
     
-    // 2. Vis riktig lås for dette nivået
-    const activeLock = document.getElementById(`lock-level-${currentLevel}`);
-    if (activeLock) activeLock.classList.add('active');
+    // Start tilfeldige brannmurer
+    startFirewallLoop();
+};
 
-    // 3. Oppdater header
-    const headers = ["KEYPAD_ENTRY", "VAULT_DIAL", "SERVER_RACK", "MATRIX_GRID", "CORE_REACTOR"];
-    document.getElementById('lock-header').innerText = headers[currentLevel - 1];
-
-    if (newLevel) {
-        lockStatusText.innerText = "LÅST";
-        lockStatusText.style.color = "red";
-        rotation = 0;
-        // Reset spesifikke visualiseringer
-        if (currentLevel === 1) document.getElementById('keypad-screen').innerText = "ENTER CODE...";
-        if (currentLevel === 2) {
-             document.getElementById('safe-dial').style.transform = `rotate(0deg)`;
-             document.querySelectorAll('.led').forEach(l => l.classList.remove('on'));
-        }
-        if (currentLevel === 3) document.querySelectorAll('.server-slot').forEach(s => s.classList.remove('hacked'));
-        if (currentLevel === 4) document.querySelectorAll('.matrix-char').forEach(c => c.classList.remove('active'));
-        if (currentLevel === 5) {
-            document.querySelector('.core-container').classList.remove('stabilized');
-            document.getElementById('core-center').innerText = "0%";
-        }
-    }
-}
-
-function animateSuccess() {
-    // Animasjon avhengig av nivå
-    lockStatusText.innerText = "PROSESSERER...";
-    lockStatusText.style.color = "yellow";
-
-    switch(currentLevel) {
-        case 1: // Keypad: Skriv tall på skjerm
-            const screen = document.getElementById('keypad-screen');
-            let codes = [currentAnswer, "****", "OK", "73X", currentAnswer, "##", "UNLOCK"];
-            screen.innerText = `INPUT: ${currentAnswer}`;
-            // Blink en tilfeldig knapp
-            let keys = document.querySelectorAll('.keypad-grid div');
-            let randKey = keys[Math.floor(Math.random() * keys.length)];
-            randKey.classList.add('pressed');
-            setTimeout(() => randKey.classList.remove('pressed'), 200);
-            break;
-
-        case 2: // Safe: Roter hjulet
-            rotation += (360 / tasksPerLevel);
-            document.getElementById('safe-dial').style.transform = `rotate(${rotation}deg)`;
-            // Tenn lys
-            let led = document.getElementById(`sl-${tasksSolved}`);
-            if(led) led.classList.add('on');
-            break;
-
-        case 3: // Server: Hack en slot
-            let slot = document.getElementById(`srv-${tasksSolved}`);
-            if(slot) slot.classList.add('hacked');
-            break;
-
-        case 4: // Matrix: Lys opp tegn
-            // Lys opp 2-3 tilfeldige tegn
-            let mtxChars = document.querySelectorAll('.matrix-char:not(.active)');
-            if(mtxChars.length > 0) {
-                 mtxChars[0].classList.add('active');
-                 if(mtxChars[1]) mtxChars[1].classList.add('active');
-            }
-            break;
-            
-        case 5: // Core: Øk prosent
-            let pct = Math.floor((tasksSolved / tasksPerLevel) * 100);
-            document.getElementById('core-center').innerText = pct + "%";
-            document.querySelector('.core-container').classList.add('stabilized');
-            setTimeout(() => document.querySelector('.core-container').classList.remove('stabilized'), 500);
-            break;
-    }
-}
+function getNum(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function getVar() { return vars[Math.floor(Math.random() * vars.length)]; }
 
 function generateQuestion() {
-    let v = vars[Math.floor(Math.random() * vars.length)];
-    let v2 = vars[Math.floor(Math.random() * vars.length)];
-    while(v2 === v) { v2 = vars[Math.floor(Math.random() * vars.length)]; }
-    function getNum(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+    isDebugTask = false;
+    document.getElementById('hint-text').style.display = 'none';
+    
+    // 20% sjanse for Feilsøking (Debugging) oppgave
+    if (Math.random() < 0.2) {
+        generateDebugTask();
+        return;
+    }
 
+    let v = getVar();
     let q = "", a = 0;
-    // ... (Samme matte-logikk som før, forkortet her for plass) ...
-    // Bruk matte-logikken fra forrige svar (script.js steg 3) her.
-    // Jeg legger inn et eksempel for nivå 1:
     
-    if (difficulty === 1) {
-         if (currentLevel === 1) { 
-            let n1 = getNum(5, 20), n2 = getNum(2, 10);
-            q = `Hva er ${v} + ${n2} hvis ${v} = ${n1}?`; a = n1 + n2;
-         } else {
-             // ... Resten av nivåene ...
-             // For å spare plass i svaret: Kopier switch-casene fra forrige svar inn her
-             let n1 = getNum(2,10), n2 = getNum(2,10);
-             q = `Regn ut ${n1} * ${n2}`; a = n1*n2; // Placeholder
-         }
-    } else {
-        let n1 = getNum(5, 20), n2 = getNum(2, 10);
-        q = `Hva er ${v} - ${n2} hvis ${v} = ${n1}?`; a = n1 - n2; // Placeholder
-    }
-
-    // --- VIKTIG: Sett inn den fulle switch-case logikken fra forrige svar her for å få alle matteoppgavene ---
-    // Jeg bruker matte-logikken fra v4.0 (forrige svar)
-    
-    // Gjenoppretter full logikk for demo:
-    if (difficulty === 1) {
+    if (difficulty === 1) { // REKRUTT
+        let n1 = getNum(2,10), n2 = getNum(2,10);
         switch(currentLevel) {
-            case 1: 
-                levelTitle.innerText = "Nivå 1: Variabler";
-                let n1 = getNum(5, 20); let n2 = getNum(2, 10);
-                if(Math.random() > 0.5) { q = `Hvis <span style="color:white">${v} = ${n1}</span>,<br>hva er <b>${v} + ${n2}</b>?`; a = n1 + n2; } 
-                else { q = `Hvis <span style="color:white">${v} = ${n1}</span>,<br>hva er <b>${v} - ${n2}</b>?`; a = n1 - n2; }
-                break;
-            case 2: levelTitle.innerText = "Nivå 2: Koeffisienter"; let k1 = getNum(2,6), k2 = getNum(3,9); q = `Hvis <span style="color:white">${v} = ${k2}</span>,<br>hva er <b>${k1}${v}</b>?`; a = k1*k2; break;
-            case 3: levelTitle.innerText = "Nivå 3: Uttrykk"; let u1=getNum(2,5), u2=getNum(3,8), u3=getNum(2,12); q = `Regn ut <b>${u1}${v} + ${u3}</b><br>når <span style="color:white">${v} = ${u2}</span>`; a = u1*u2+u3; break;
-            case 4: levelTitle.innerText = "Nivå 4: Likninger"; a=getNum(3,20); let l1=getNum(2,15); let res=a+l1; q = `Finn ${v}:<br><b>${v} + ${l1} = ${res}</b>`; break;
-            case 5: levelTitle.innerText = "Nivå 5: Divisjon"; a=getNum(2,12); let d1=getNum(2,6); let res2=a*d1; q = `Finn ${v}:<br><b>${d1}${v} = ${res2}</b>`; break;
+            case 1: q=`Hvis ${v} = ${n1}, hva er <b>${v} + ${n2}</b>?`; a=n1+n2; break;
+            case 2: q=`Hvis ${v} = ${n2}, hva er <b>${n1}${v}</b>?`; a=n1*n2; break;
+            case 3: q=`Regn ut: <b>${n1}${v} + ${n2}</b> når ${v}=3`; a=n1*3+n2; break;
+            case 4: q=`Finn ${v}: <b>${v} + ${n1} = ${n1+n2}</b>`; a=n2; break;
+            case 5: q=`Finn ${v}: <b>${n1}${v} = ${n1*n2}</b>`; a=n2; break;
         }
-    } else {
-        // Hacker logikk (forenklet for plass, men bruk gjerne den fra v4.0)
-        let n1=getNum(2,10), n2=getNum(2,10);
-        q = `Regn ut ${n1} + ${n2}`; a = n1+n2; // Fallback
+    } else { // HACKER
+        let n1 = getNum(3,12), n2 = getNum(3,12);
         switch(currentLevel) {
-            case 1: levelTitle.innerText = "Nivå 1: Negative tall"; let m1=getNum(-5,15), m2=getNum(5,20); q=`Regn ut <b>${m2} - ${v}</b><br>når <span style="color:white">${v} = ${m1}</span>`; a=m2-m1; break;
-            case 2: levelTitle.innerText = "Nivå 2: Uttrykk"; let ut1=getNum(3,6), ut2=getNum(2,5), ut3=getNum(5,15); q=`Regn ut <b>${ut1}${v} - ${ut3}</b><br>når <span style="color:white">${v} = ${ut2}</span>`; a=ut1*ut2-ut3; break;
-            case 3: levelTitle.innerText = "Nivå 3: Parenteser"; let p1=getNum(2,5), p2=getNum(2,10), p3=getNum(1,8); q=`Regn ut <b>${p1}(${v} + ${p3})</b><br>når <span style="color:white">${v} = ${p2}</span>`; a=p1*(p2+p3); break;
-            case 4: levelTitle.innerText = "Nivå 4: To variabler"; let tv1=getNum(2,10), tv2=getNum(2,10); q=`Hvis <span style="color:white">${v}=${tv1}</span> og <span style="color:white">${v2}=${tv2}</span>,<br>hva er <b>2${v} + ${v2}</b>?`; a=2*tv1+tv2; break;
-            case 5: levelTitle.innerText = "Nivå 5: Master Key"; a=getNum(3,10); let mk1=getNum(2,5), mk2=getNum(2,10); let mkr=mk1*a+mk2; q=`Finn ${v}:<br><b>${mk1}${v} + ${mk2} = ${mkr}</b>`; break;
+            case 1: q=`Regn ut: <b>${n2} - ${v}</b> når ${v}=${n1}`; a=n2-n1; break;
+            case 2: q=`Regn ut: <b>${n1}${v} - ${n2}</b> når ${v}=4`; a=n1*4-n2; break;
+            case 3: q=`Regn ut: <b>2(${v} + ${n1})</b> når ${v}=5`; a=2*(5+n1); break;
+            case 4: q=`Hvis x=${n1} og y=${n2}, hva er <b>2x + y</b>?`; a=2*n1+n2; break;
+            case 5: q=`Finn ${v}: <b>${n1}${v} + ${n2} = ${n1*5+n2}</b>`; a=5; break;
         }
     }
-
+    
     currentAnswer = a;
-    questionText.innerHTML = q;
-    inputField.value = '';
+    document.getElementById('question-text').innerHTML = q;
 }
 
+// --- FEILSØKING (Debugging) ---
+function generateDebugTask() {
+    isDebugTask = true;
+    let v = getVar();
+    let wrongAns = getNum(10, 20);
+    let rightAns = getNum(2, 9);
+    
+    // Vi lager en "logg" med feil i
+    let text = `
+        SYSTEM ERROR LOG:<br>
+        Likning: 2${v} = ${rightAns * 2}<br>
+        Systemet beregnet: ${v} = ${wrongAns} (FEIL!)<br>
+        <br>
+        Hva er den <b>RIKTIGE</b> verdien for ${v}?
+    `;
+    
+    currentAnswer = rightAns;
+    document.getElementById('question-text').innerHTML = text;
+    document.getElementById('question-text').style.color = "#ffaa00";
+}
+
+// --- HINT SYSTEM ---
+window.useHint = function() {
+    timeLeft -= 60; // Kostnad
+    playSound('wrong'); // Straffelyd
+    let hint = "";
+    
+    if (isDebugTask) {
+        hint = "Ignorer systemets svar. Løs likningen selv.";
+    } else if (difficulty === 1) {
+        if(currentLevel === 1) hint = "Bytt ut bokstaven med tallet.";
+        else if(currentLevel === 4) hint = "Hva må du legge til for å få svaret?";
+        else hint = "Prøv å sette inn verdien for variabelen.";
+    } else {
+        hint = "Husk regne-rekkefølgen: Ganging før pluss/minus.";
+    }
+    
+    const hDiv = document.getElementById('hint-text');
+    hDiv.innerText = "HINT: " + hint;
+    hDiv.style.display = 'block';
+}
+
+// --- SJEKK SVAR ---
 window.checkAnswer = function() {
-    let userVal = parseInt(inputField.value);
-    if (isNaN(userVal)) { logElement.innerText = "> FEIL: Skriv et tall."; return; }
-
+    let userVal = parseInt(document.getElementById('user-input').value);
+    
     if (userVal === currentAnswer) {
+        // --- RIKTIG ---
+        playSound('correct');
         tasksSolved++;
-        logElement.innerHTML = `> KODE GODKJENT. (${tasksSolved}/${tasksPerLevel})`;
-        logElement.style.color = "#00ff41";
+        combo++;
         
-        // --- KJØR SPESIFIKK ANIMASJON ---
-        animateSuccess();
-        updateUI();
+        // Combo-sjekk
+        if (combo >= 3) {
+            document.body.classList.add('combo-mode');
+            document.getElementById('combo-badge').style.display = 'inline';
+            matrixColor = "#ffcc00"; // Gull-regn
+        }
 
+        animateLock();
+        
         if (tasksSolved >= tasksPerLevel) {
-            logElement.innerHTML = `> NIVÅ ${currentLevel} FULLFØRT! Tilgang innvilget.`;
-            lockStatusText.innerText = "ACCESS GRANTED";
-            lockStatusText.style.color = "#00ff41";
-            
-            // Liten pause før neste nivå
-            setTimeout(() => {
-                currentLevel++;
-                tasksSolved = 0;
-                let totalProgress = ((currentLevel - 1) / maxLevels) * 100;
-                progressBar.style.width = totalProgress + "%";
-                
-                if (currentLevel > maxLevels) {
-                    gameWrapper.style.display = 'none';
-                    document.getElementById('victory').classList.add('active');
-                } else {
-                    updateLockVisuals(true); // Bytt til neste lås
-                    updateUI();
-                    generateQuestion();
-                }
-            }, 2000);
+            nextLevel();
         } else {
             setTimeout(generateQuestion, 1000);
         }
     } else {
-        logElement.innerText = "> UGYLDIG KODE.";
-        logElement.style.color = "red";
-        inputField.classList.add('shake');
-        setTimeout(() => { inputField.classList.remove('shake'); inputField.value = ''; generateQuestion(); }, 800);
+        // --- FEIL ---
+        playSound('wrong');
+        combo = 0;
+        document.body.classList.remove('combo-mode');
+        document.getElementById('combo-badge').style.display = 'none';
+        matrixColor = "#00ff41";
+        
+        document.getElementById('user-input').classList.add('shake');
+        setTimeout(() => document.getElementById('user-input').classList.remove('shake'), 500);
+    }
+    document.getElementById('user-input').value = "";
+    document.getElementById('user-input').focus();
+    updateUI();
+}
+
+function nextLevel() {
+    playSound('win');
+    document.getElementById('lock-status-text').innerText = "ACCESS GRANTED";
+    document.getElementById('lock-status-text').style.color = "#00ff41";
+    
+    setTimeout(() => {
+        currentLevel++;
+        tasksSolved = 0;
+        combo = 0;
+        document.body.classList.remove('combo-mode');
+        matrixColor = "#00ff41";
+        
+        if (currentLevel > maxLevels) {
+            document.getElementById('game-wrapper').style.display = 'none';
+            document.getElementById('victory').classList.add('active');
+        } else {
+            updateLockVisuals(true);
+            generateQuestion();
+            updateUI();
+        }
+    }, 2000);
+}
+
+// --- LÅS ANIMASJONER ---
+function animateLock() {
+    const ls = document.getElementById('lock-status-text');
+    ls.innerText = "DEKRYPTERER...";
+    ls.style.color = "yellow";
+    
+    if (currentLevel === 1) { // Keypad
+        document.getElementById('keypad-screen').innerText = "CODE: " + currentAnswer;
+        let keys = document.querySelectorAll('.keypad-grid div');
+        keys[Math.floor(Math.random()*12)].classList.add('pressed');
+        setTimeout(()=> document.querySelectorAll('.pressed').forEach(k=>k.classList.remove('pressed')), 200);
+    }
+    else if (currentLevel === 2) { // Safe
+        rotation += 50;
+        document.getElementById('safe-dial').style.transform = `rotate(${rotation}deg)`;
+        if(document.getElementById(`sl-${tasksSolved}`)) document.getElementById(`sl-${tasksSolved}`).classList.add('on');
+    }
+    else if (currentLevel === 3) { // Server
+        if(document.getElementById(`srv-${tasksSolved}`)) document.getElementById(`srv-${tasksSolved}`).classList.add('hacked');
+    }
+    else if (currentLevel === 4) { // Matrix
+        let chars = document.querySelectorAll('.matrix-char');
+        chars[Math.floor(Math.random()*chars.length)].classList.add('active');
+        chars[Math.floor(Math.random()*chars.length)].innerText = currentAnswer;
+    }
+    else if (currentLevel === 5) { // Core
+        let pct = Math.floor((tasksSolved/tasksPerLevel)*100);
+        document.getElementById('core-center').innerText = pct + "%";
     }
 }
 
-window.handleEnter = function(event) { if (event.key === 'Enter') checkAnswer(); }
+function updateLockVisuals(reset) {
+    document.querySelectorAll('.lock-mechanism').forEach(el => el.classList.remove('active'));
+    let active = document.getElementById(`lock-level-${currentLevel}`);
+    if(active) active.classList.add('active');
+    
+    const titles = ["KEYPAD", "SAFE_DIAL", "SERVER_RACK", "MATRIX_GRID", "CORE_REACTOR"];
+    document.getElementById('lock-header').innerText = titles[currentLevel-1];
+    
+    if(reset) {
+        document.getElementById('lock-status-text').innerText = "LÅST";
+        document.getElementById('lock-status-text').style.color = "red";
+        // Reset specific visuals (simplified)
+        document.querySelectorAll('.led').forEach(l=>l.classList.remove('on'));
+        document.querySelectorAll('.hacked').forEach(h=>h.classList.remove('hacked'));
+        document.querySelectorAll('.matrix-char').forEach(c=>c.classList.remove('active'));
+    }
+}
+
+// --- BRANNMUR (RANDOM EVENT) ---
+let fwTimer;
+function startFirewallLoop() {
+    // Sjekk hvert 30. sekund, 30% sjanse for brannmur
+    setInterval(() => {
+        if (Math.random() < 0.3 && document.getElementById('firewall-modal').style.display !== 'flex') {
+            triggerFirewall();
+        }
+    }, 30000);
+}
+
+function triggerFirewall() {
+    playSound('alarm');
+    matrixColor = "red"; // Bakgrunn blir rød
+    
+    const modal = document.getElementById('firewall-modal');
+    const taskEl = document.getElementById('firewall-task');
+    const input = document.getElementById('firewall-input');
+    const bar = document.getElementById('fw-timer-bar');
+    
+    // Generer enkel oppgave
+    let n1 = getNum(5, 10), n2 = getNum(5, 10);
+    taskEl.innerText = `${n1} + ${n2}`;
+    modal.style.display = 'flex';
+    input.value = "";
+    input.focus();
+    
+    // Countdown bar (10 sekunder)
+    bar.style.width = "100%";
+    let width = 100;
+    
+    fwTimer = setInterval(() => {
+        width -= 1;
+        bar.style.width = width + "%";
+        if (width <= 0) {
+            clearInterval(fwTimer);
+            modal.style.display = 'none';
+            timeLeft -= 60; // Straff
+            playSound('wrong');
+            matrixColor = "#00ff41";
+            alert("BRANNMUR BRØT GJENNOM! -60 sekunder.");
+        }
+    }, 100); // 100 * 100ms = 10 sek
+    
+    window.checkFirewall = function() {
+        if (parseInt(input.value) === (n1 + n2)) {
+            clearInterval(fwTimer);
+            modal.style.display = 'none';
+            playSound('correct');
+            matrixColor = document.body.classList.contains('combo-mode') ? "#ffcc00" : "#00ff41";
+            document.getElementById('user-input').focus();
+        } else {
+            input.style.borderColor = "red";
+        }
+    }
+}
+window.handleFirewallEnter = function(e) { if(e.key === 'Enter') checkFirewall(); }
+
+// --- DIVERSE ---
+window.handleEnter = function(e) { 
+    if(e.key === 'Enter') checkAnswer(); 
+    else playSound('type'); // Tastetrykk lyd
+}
 
 function updateUI() {
-    subProgressText.innerText = `${tasksSolved}/${tasksPerLevel}`;
-    if (currentLevel <= maxLevels) levelIndicator.innerText = `Nivå: ${currentLevel}/${maxLevels}`;
+    document.getElementById('sub-progress-text').innerText = `${tasksSolved}/${tasksPerLevel}`;
+    document.getElementById('level-indicator').innerText = `Nivå: ${currentLevel}/${maxLevels}`;
 }
 
 function startTimer() {
     timerInterval = setInterval(() => {
         let m = Math.floor(timeLeft / 60);
         let s = timeLeft % 60;
-        if(timerElement) timerElement.innerText = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
-        if (timeLeft <= 0) { clearInterval(timerInterval); alert("Tiden er ute!"); location.reload(); }
+        document.getElementById('timer').innerText = `${m}:${s < 10 ? '0'+s : s}`;
+        if (timeLeft <= 0) { clearInterval(timerInterval); alert("TIDEN ER UTE!"); location.reload(); }
         timeLeft--;
     }, 1000);
 }
