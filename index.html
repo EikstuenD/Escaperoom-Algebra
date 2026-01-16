@@ -3,54 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Operasjon Kodeknekk: Algebra</title>
+    <title>Operasjon Svart Skjerm</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="container">
+    <div class="terminal">
         <header>
-            <h1>SYSTEM LOCKDOWN: ALGEBRA</h1>
-            <p id="status-text">Skolen er låst. Finn variablene for å låse opp systemet.</p>
+            <h1>> OPERASJON_SVART_SKJERM</h1>
+            <div class="stats">
+                <span>TID IGJEN: <span id="timer">15:00</span></span>
+                <span>STATUS: <span id="progress-text">0% fullført</span></span>
+            </div>
+            <div class="progress-bar"><div id="progress-fill"></div></div>
         </header>
 
-        <section id="room1" class="room active">
-            <h2>Rom 1: Variabel-detektiven</h2>
-            <p>For å åpne den første døren må du finne verdien av uttrykket:</p>
+        <div id="log-console">> Venter på dekryptering...</div>
+
+        <section id="level1" class="room active">
+            <h2>Nivå 1: Variabel-analyse</h2>
+            <p>Systemet er låst med to variabler. Finn summen.</p>
             <div class="task">
-                <p>Hvis $a = 12$ og $b = 5$, hva er da $a - b + 3$?</p>
+                Hvis a = 15 og b = -4<br>
+                Hva blir 2a + b?
             </div>
-            <input type="number" id="input1" placeholder="Skriv kode...">
-            <button onclick="checkLevel1()">Lås opp</button>
+            <input type="number" id="input1" placeholder="Skriv svar...">
+            <button onclick="checkLevel(1, 26)">KJØR KODE</button>
         </section>
 
-        <section id="room2" class="room">
-            <h2>Rom 2: Mønster-koden</h2>
-            <p>Systemet krever det neste tallet i tallfølgen for å fortsette:</p>
+        <section id="level2" class="room">
+            <h2>Nivå 2: Parentes-fellen</h2>
+            <p>Vannmåleren på skolen er hacket. Løs uttrykket for å stoppe lekkasjen:</p>
             <div class="task">
-                <p>$3, 7, 11, 15, \dots$</p>
-                <p>Hvilket tall kommer som nummer 6 i denne rekken?</p>
+                Regn ut verdien når x = 7:<br>
+                3(x + 2) - 2x
             </div>
-            <input type="number" id="input2" placeholder="Skriv kode...">
-            <button onclick="checkLevel2()">Lås opp</button>
+            <input type="number" id="input2" placeholder="Skriv svar...">
+            <button onclick="checkLevel(2, 13)">KJØR KODE</button>
         </section>
 
-        <section id="room3" class="room">
-            <h2>Rom 3: X-faktoren</h2>
-            <p>Siste dør! Løs ligningen for å reboote systemet:</p>
+        <section id="level3" class="room">
+            <h2>Nivå 3: X-faktoren</h2>
+            <p>Sentralbordet krever verdien av x for å åpne brannmuren:</p>
             <div class="task">
-                <p>$2x + 4 = 16$</p>
-                <p>Hva er verdien til $x$?</p>
+                4x - 8 = 2x + 12<br>
+                Finn verdien av x.
             </div>
-            <input type="number" id="input3" placeholder="Skriv kode...">
-            <button onclick="checkLevel3()">Fullfør oppdrag</button>
+            <input type="number" id="input3" placeholder="Skriv svar...">
+            <button onclick="checkLevel(3, 10)">KJØR KODE</button>
+        </section>
+
+        <section id="level4" class="room">
+            <h2>Nivå 4: Logikk-knekkeren</h2>
+            <p>En kryptert melding sier:</p>
+            <div class="task">
+                "Jeg tenker på et tall x. Hvis jeg dobler tallet og legger til 10, får jeg 40."<br>
+                Hvilket tall tenker jeg på?
+            </div>
+            <input type="number" id="input4" placeholder="Skriv svar...">
+            <button onclick="checkLevel(4, 15)">KJØR KODE</button>
+        </section>
+
+        <section id="level5" class="room">
+            <h2>Nivå 5: Geometri-koden</h2>
+            <p>Siste barriere! En rektangulær serverpark har omkrets på 30 meter.</p>
+            <div class="task">
+                Den lengste siden er x + 5.<br>
+                Den korteste siden er x.<br>
+                Hva er verdien til x? (Husk: Omkrets = summen av alle fire sider)
+            </div>
+            <input type="number" id="input5" placeholder="Skriv svar...">
+            <button onclick="checkLevel(5, 5)">DEKRYPTER SYSTEMET</button>
         </section>
 
         <section id="victory" class="room">
-            <h2 class="success">SYSTEM REBOOTED!</h2>
-            <p>Gratulerer, agenter! Dere har knekt algebra-koden og reddet skolen.</p>
-            <div class="badge">🏆</div>
-            <button onclick="location.reload()">Spill igjen</button>
+            <h2 class="success">ACCESS GRANTED</h2>
+            <p>Du har reddet skolen fra det digitale viruset!</p>
+            <div class="badge">💻🔓</div>
+            <p id="final-time"></p>
+            <button onclick="location.reload()">START PÅ NYTT</button>
         </section>
     </div>
 
