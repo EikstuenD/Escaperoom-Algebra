@@ -1,0 +1,65 @@
+body {
+    background-color: #0d1117;
+    color: #39ff14;
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background: #161b22;
+    padding: 2rem;
+    border: 2px solid #39ff14;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(57, 255, 20, 0.2);
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
+}
+
+.room {
+    display: none; /* Skjuler alle rom som standard */
+}
+
+.room.active {
+    display: block; /* Viser kun det aktive rommet */
+}
+
+.task {
+    background: #0d1117;
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 5px;
+    font-size: 1.2rem;
+}
+
+input {
+    background: #161b22;
+    border: 1px solid #39ff14;
+    color: #39ff14;
+    padding: 10px;
+    font-size: 1rem;
+    width: 60%;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+button {
+    background: #39ff14;
+    color: #0d1117;
+    border: none;
+    padding: 10px 20px;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+button:hover {
+    background: #2cc410;
+}
+
+.success { color: #fff; text-shadow: 0 0 10px #39ff14; }
+.badge { font-size: 5rem; margin: 20px 0; }
