@@ -4,8 +4,29 @@ body {
     font-family: 'Courier New', monospace;
     display: flex;
     justify-content: center;
-    padding-top: 50px;
+    align-items: center; /* Sentrerer vertikalt også */
+    min-height: 100vh;
     margin: 0;
+    overflow-x: hidden;
+}
+
+/* CRT Scanline effekt */
+.scanlines {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0),
+        rgba(255,255,255,0) 50%,
+        rgba(0,0,0,0.2) 50%,
+        rgba(0,0,0,0.2)
+    );
+    background-size: 100% 4px;
+    pointer-events: none; /* Lar deg klikke gjennom */
+    z-index: 10;
 }
 
 .terminal {
@@ -15,23 +36,34 @@ body {
     padding: 30px;
     border: 1px solid #00ff41;
     box-shadow: 0 0 15px #00ff4133;
+    position: relative;
+    z-index: 1;
 }
 
 #log-console {
     background: #001a00;
     padding: 10px;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     margin: 20px 0;
     border-left: 3px solid #00ff41;
     min-height: 1.2rem;
+    text-shadow: 0 0 5px #00ff41;
 }
 
-.room {
-    display: none;
+.cursor {
+    animation: blink 1s step-end infinite;
 }
 
-.room.active {
-    display: block;
+@keyframes blink {
+    50% { opacity: 0; }
+}
+
+.room { display: none; }
+.room.active { display: block; animation: fadeIn 0.5s; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .task {
@@ -50,13 +82,15 @@ body {
     margin-top: 10px;
     border-radius: 5px;
     overflow: hidden;
+    border: 1px solid #333;
 }
 
 #progress-fill {
     background: #00ff41;
     height: 100%;
     width: 0%;
-    transition: width 0.5s;
+    transition: width 0.5s ease-in-out;
+    box-shadow: 0 0 10px #00ff41;
 }
 
 input {
@@ -64,9 +98,35 @@ input {
     border: 1px solid #00ff41;
     color: white;
     padding: 10px;
-    width: 100px;
+    width: 120px;
     margin-bottom: 20px;
     font-size: 1.1rem;
+    font-family: inherit;
+    outline: none;
+}
+
+input:focus {
+    box-shadow: 0 0 10px #00ff4166;
+}
+
+/* Denne klassen legges til med JS ved feil svar */
+.shake {
+    animation: shake 0.5s;
+    border-color: red !important;
+}
+
+@keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
 }
 
 button {
@@ -77,13 +137,13 @@ button {
     cursor: pointer;
     font-weight: bold;
     text-transform: uppercase;
+    font-family: inherit;
+    transition: all 0.2s;
 }
 
 button:hover {
     background: #008f11;
+    box-shadow: 0 0 15px #00ff41;
 }
 
-.badge {
-    font-size: 4rem;
-    margin: 20px 0;
-}
+.badge { font-size: 4rem; margin: 20px 0; }
