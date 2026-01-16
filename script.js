@@ -1,33 +1,50 @@
-function checkLevel1() {
-    const answer = document.getElementById('input1').value;
-    // Svaret på 12 - 5 + 3 = 10
-    if (answer == "10") {
-        document.getElementById('room1').classList.remove('active');
-        document.getElementById('room2').classList.add('active');
+let timeLeft = 900; // 15 minutter
+const timerElement = document.getElementById('timer');
+const logElement = document.getElementById('log-console');
+
+// Timer-funksjon
+const countdown = setInterval(() => {
+    let minutes = Math.floor(timeLeft / 60);
+    let seconds = timeLeft % 60;
+    timerElement.innerText = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    
+    if (timeLeft <= 0) {
+        clearInterval(countdown);
+        alert("SYSTEM CRASHED: Tiden er ute!");
+        location.reload();
+    }
+    timeLeft--;
+}, 1000);
+
+function updateProgress(level) {
+    const percent = (level / 5) * 100;
+    document.getElementById('progress-fill').style.width = percent + "%";
+    document.getElementById('progress-text').innerText = percent + "% fullført";
+}
+
+function checkLevel(level, correctAnswer) {
+    const input = document.getElementById('input' + level).value;
+    
+    if (input == correctAnswer) {
+        logElement.innerText = `> Nivå ${level} brutt! Dekrypterer neste lag...`;
+        
+        document.getElementById('level' + level).classList.remove('active');
+        updateProgress(level);
+
+        if (level < 5) {
+            document.getElementById('level' + (level + 1)).classList.add('active');
+        } else {
+            finishGame();
+        }
     } else {
-        alert("FEIL KODE. Prøv igjen, agent.");
+        logElement.innerText = `> ADVARSEL: Feil kode tastet inn. Systemet sporer deg...`;
+        logElement.style.color = "red";
+        setTimeout(() => logElement.style.color = "#00ff41", 1000);
     }
 }
 
-function checkLevel2() {
-    const answer = document.getElementById('input2').value;
-    // Tallfølge: 3, 7, 11, 15, 19, 23 (Nummer 6 er 23)
-    if (answer == "23") {
-        document.getElementById('room2').classList.remove('active');
-        document.getElementById('room3').classList.add('active');
-    } else {
-        alert("FEIL KODE. Mønsteret stemmer ikke.");
-    }
-}
-
-function checkLevel3() {
-    const answer = document.getElementById('input3').value;
-    // Ligning: 2x + 4 = 16 => 2x = 12 => x = 6
-    if (answer == "6") {
-        document.getElementById('room3').classList.remove('active');
-        document.getElementById('victory').classList.add('active');
-        document.getElementById('status-text').innerText = "TILGANG INNVILGET";
-    } else {
-        alert("FEIL KODE. Ligningen er ikke i balanse.");
-    }
+function finishGame() {
+    clearInterval(countdown);
+    document.getElementById('victory').classList.add('active');
+    document.getElementById('final-time').innerText = `Tid brukt: ${900 - timeLeft} sekunder.`;
 }
