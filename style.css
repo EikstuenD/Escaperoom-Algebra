@@ -1,120 +1,124 @@
+/* --- GRUNNOPPSETT --- */
 body {
-    background-color: #050505; color: #00ff41;
+    background-color: #000; color: #00ff41;
     font-family: 'Courier New', monospace;
     display: flex; justify-content: center; align-items: center;
-    min-height: 100vh; margin: 0; overflow-x: hidden;
+    min-height: 100vh; margin: 0; overflow: hidden;
+}
+
+/* Matrix Bakgrunn */
+#matrix-bg {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 0; opacity: 0.3; pointer-events: none;
 }
 
 .scanlines {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(to bottom, rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%);
+    background: linear-gradient(to bottom, rgba(0,0,0,0) 50%, rgba(0,0,0,0.2) 50%);
     background-size: 100% 4px; pointer-events: none; z-index: 10;
 }
 
+/* COMBO MODE EFFEKT */
+body.combo-mode .terminal { box-shadow: 0 0 25px #ffcc00; border-color: #ffcc00; }
+body.combo-mode #matrix-bg { opacity: 0.6; }
+#combo-badge { color: #ffcc00; font-weight: bold; margin-left: 10px; animation: pulse 0.5s infinite alternate; }
+
+/* ALARM MODE (Brannmur) */
+.alarm-mode { border-color: red !important; box-shadow: 0 0 50px red !important; }
+.blink { animation: blink 0.5s infinite; color: red; }
+
+@keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* UI LAYOUT */
 .game-wrapper {
-    display: flex; gap: 20px; width: 95%; max-width: 900px; z-index: 1;
+    display: flex; gap: 20px; width: 95%; max-width: 900px; z-index: 2; position: relative;
 }
 
-/* TERMINAL (Venstre) */
 .terminal {
-    flex: 2; background: #0a0a0a; padding: 30px;
+    flex: 2; background: rgba(10, 10, 10, 0.95); padding: 30px;
     border: 1px solid #00ff41; box-shadow: 0 0 15px #00ff4133;
-}
-
-/* LOCK PANEL (Høyre) */
-.lock-panel {
-    flex: 1; background: #020b02; border: 2px solid #004d00;
-    display: flex; flex-direction: column; align-items: center;
-    padding: 20px; box-shadow: inset 0 0 20px #000;
-    min-height: 350px; justify-content: space-between;
-}
-
-.lock-header {
-    border-bottom: 1px solid #00ff41; width: 100%; text-align: center;
-    margin-bottom: 10px; color: #008f11; letter-spacing: 2px;
-}
-
-.lock-mechanism { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; }
-.lock-mechanism.active { display: flex; }
-
-/* NIVÅ 1: KEYPAD */
-.keypad-screen {
-    background: #001a00; border: 1px solid #00ff41; color: #00ff41;
-    width: 80%; padding: 10px; margin-bottom: 10px; text-align: center;
-    font-family: 'Courier New'; font-weight: bold; letter-spacing: 2px;
-}
-.keypad-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 80%;
-}
-.keypad-grid div {
-    border: 1px solid #004d00; padding: 10px; text-align: center; cursor: default;
-    background: #000; color: #004d00;
-}
-.keypad-grid div.pressed { background: #00ff41; color: #000; }
-
-/* NIVÅ 2: SAFE DIAL */
-.safe-outer {
-    width: 140px; height: 140px; border-radius: 50%; background: #222;
-    border: 4px solid #444; display: flex; justify-content: center; align-items: center;
-    box-shadow: 0 0 15px #000;
-}
-.safe-dial {
-    width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(#666, #111);
-    position: relative; border: 2px solid #777; transition: transform 0.5s cubic-bezier(0.4, 2.5, 0.55, 0.44);
-}
-.dial-notch {
-    width: 10px; height: 10px; background: #fff; border-radius: 50%;
-    position: absolute; top: 5px; left: 50%; transform: translateX(-50%);
-}
-.safe-lights { display: flex; gap: 5px; margin-top: 15px; }
-.led { width: 10px; height: 10px; border-radius: 50%; background: #300; border: 1px solid #000; }
-.led.on { background: #00ff41; box-shadow: 0 0 5px #00ff41; }
-
-/* NIVÅ 3: SERVER RACK */
-.server-rack { width: 70%; display: flex; flex-direction: column; gap: 8px; }
-.server-slot {
-    height: 15px; background: #111; border: 1px solid #333; position: relative;
     transition: all 0.3s;
 }
-.server-slot::after { content: ''; position: absolute; right: 5px; top: 2px; width: 10px; height: 10px; background: red; border-radius: 50%; }
-.server-slot.hacked { background: #001a00; border-color: #00ff41; }
-.server-slot.hacked::after { background: #00ff41; box-shadow: 0 0 5px #00ff41; }
 
-/* NIVÅ 4: MATRIX GRID */
-.matrix-grid {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;
-    font-size: 1.5rem; color: #003300;
+.lock-panel {
+    flex: 1; background: rgba(2, 11, 2, 0.95); border: 2px solid #004d00;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 20px; box-shadow: inset 0 0 20px #000;
+    min-height: 400px; justify-content: space-between;
 }
-.matrix-char.active { color: #00ff41; text-shadow: 0 0 5px #00ff41; transform: scale(1.2); }
 
-/* NIVÅ 5: REACTOR CORE */
-.core-container { position: relative; width: 150px; height: 150px; display: flex; justify-content: center; align-items: center; }
+/* INPUTS & KNAPPER */
+input {
+    background: black; border: 1px solid #00ff41; color: white;
+    padding: 10px; font-size: 1.1rem; outline: none; font-family: inherit;
+}
+#avatar-input { width: 80%; text-align: center; font-size: 1.5rem; margin-bottom: 20px; text-transform: uppercase; }
+.input-group { display: flex; gap: 10px; margin-top: 10px; }
+
+button {
+    background: #00ff41; color: black; border: none; padding: 10px 20px;
+    cursor: pointer; font-weight: bold; font-family: inherit;
+}
+button:hover { background: #008f11; }
+
+#hint-btn {
+    background: transparent; border: 1px solid #ffaa00; color: #ffaa00;
+    font-size: 0.7em; padding: 5px 10px; margin-left: auto;
+}
+#hint-btn:hover { background: #ffaa00; color: black; }
+
+/* OPPGAVE BOKS */
+.task-container {
+    background: #111; border: 1px dashed #00ff41; padding: 15px;
+    margin: 20px 0; display: flex; flex-direction: column; gap: 10px;
+}
+.task { font-weight: bold; font-size: 1.2rem; line-height: 1.5; }
+
+/* MODALS (Start, Seier, Brannmur) */
+.overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9); z-index: 50;
+    display: none; justify-content: center; align-items: center;
+}
+.overlay.active { display: flex; }
+.modal {
+    background: #0a0a0a; border: 2px solid #00ff41; padding: 40px;
+    text-align: center; box-shadow: 0 0 20px #00ff41; max-width: 500px;
+}
+
+.firewall-task { font-size: 3rem; margin: 20px 0; font-weight: bold; }
+.countdown-bar { width: 100%; height: 10px; background: #330000; margin-top: 20px; }
+#fw-timer-bar { width: 100%; height: 100%; background: red; }
+
+/* --- LÅS STILER (Fra v6.0) --- */
+.lock-mechanism { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; }
+.lock-mechanism.active { display: flex; }
+.lock-header { border-bottom: 1px solid #00ff41; width: 100%; text-align: center; margin-bottom: 10px; color: #008f11; }
+.keypad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 80%; }
+.keypad-grid div { border: 1px solid #004d00; padding: 10px; text-align: center; background: #000; color: #004d00; }
+.keypad-grid div.pressed { background: #00ff41; color: black; }
+.keypad-screen { border: 1px solid #00ff41; padding: 5px; width: 80%; text-align: center; margin-bottom: 10px; }
+.safe-outer { width: 120px; height: 120px; border-radius: 50%; background: #222; border: 4px solid #444; display: flex; justify-content: center; align-items: center; }
+.safe-dial { width: 90px; height: 90px; border-radius: 50%; background: radial-gradient(#666, #111); position: relative; border: 2px solid #777; transition: transform 0.5s; }
+.dial-notch { width: 8px; height: 8px; background: white; border-radius: 50%; position: absolute; top: 5px; left: 50%; transform: translateX(-50%); }
+.safe-lights { display: flex; gap: 4px; margin-top: 10px; }
+.led { width: 8px; height: 8px; border-radius: 50%; background: #300; }
+.led.on { background: #00ff41; box-shadow: 0 0 5px #00ff41; }
+.server-rack { width: 80%; display: flex; flex-direction: column; gap: 5px; }
+.server-slot { height: 12px; background: #111; border: 1px solid #333; position: relative; }
+.server-slot.hacked { background: #001a00; border-color: #00ff41; }
+.matrix-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; font-size: 1.2rem; color: #003300; }
+.matrix-char.active { color: #00ff41; text-shadow: 0 0 5px #00ff41; }
+.core-container { position: relative; width: 120px; height: 120px; display: flex; justify-content: center; align-items: center; }
 .core-ring { position: absolute; border-radius: 50%; border: 2px dashed #004d00; }
 .outer { width: 100%; height: 100%; animation: spin 10s linear infinite; }
-.inner { width: 70%; height: 70%; animation: spin-rev 5s linear infinite; border-color: #006600; }
-.core-center { color: #00ff41; font-weight: bold; font-size: 1.5rem; z-index: 2; text-shadow: 0 0 10px #00ff41; }
-
-.core-container.stabilized .outer { border-color: #00ff41; animation-duration: 2s; }
-.core-container.stabilized .inner { border-color: #00ff41; animation-duration: 1s; }
-
+.inner { width: 70%; height: 70%; animation: spin-rev 5s linear infinite; }
+.core-center { color: #00ff41; font-weight: bold; }
 @keyframes spin { 100% { transform: rotate(360deg); } }
 @keyframes spin-rev { 100% { transform: rotate(-360deg); } }
-
-/* Felles UI */
-.overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 20; display: none; justify-content: center; align-items: center; }
-.overlay.active { display: flex; }
-.modal { background: #0a0a0a; border: 2px solid #00ff41; padding: 40px; text-align: center; box-shadow: 0 0 20px #00ff41; max-width: 500px; }
-.difficulty-buttons { display: flex; gap: 20px; justify-content: center; margin-top: 30px; }
-#log-console { background: #001a00; padding: 10px; margin: 20px 0; border-left: 3px solid #00ff41; }
-.task { background: #111; padding: 20px; border: 1px dashed #00ff41; margin: 20px 0; font-weight: bold; font-size: 1.3rem; }
-.progress-bar { background: #222; height: 10px; width: 100%; margin-top: 10px; border-radius: 5px; }
-#progress-fill { background: #00ff41; height: 100%; width: 0%; transition: width 0.5s; }
-.sub-progress { text-align: right; font-size: 0.8rem; margin-top: 5px; color: #888; }
-input { background: black; border: 1px solid #00ff41; color: white; padding: 10px; width: 120px; font-size: 1.1rem; outline: none; }
 .shake { animation: shake 0.5s; border-color: red !important; }
 @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-button { background: #00ff41; color: black; border: none; padding: 15px 30px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-button:hover { background: #008f11; }
-.badge { font-size: 4rem; margin: 20px 0; text-align: center; }
 
-@media (max-width: 768px) { .game-wrapper { flex-direction: column; } .lock-panel { height: 250px; } }
+/* Responsiv */
+@media (max-width: 768px) { .game-wrapper { flex-direction: column; } }
