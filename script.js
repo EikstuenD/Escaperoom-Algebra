@@ -12,20 +12,34 @@ let agentName = "AGENT";
 let isDebugTask = false; 
 
 // Variabler for lyd og grafikk
-let audioCtx = null; // Starter som null, opprettes ved klikk
+let audioCtx = null;
 const vars = ['x', 'y', 'a', 'b', 'n', 'z', 'k']; 
 let rotation = 0; 
+let canvas, ctx, drops;
+const letters = "0101XYHAZK"; 
+const fontSize = 16;
+let matrixColor = "#00ff41"; 
 
-// --- OPPSTART ---
-window.onload = function() {
-    console.log("System loaded. Waiting for user input...");
+// --- SIKKER OPPSTART ---
+// Vi venter til absolutt hele nettsiden er klar
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("System initializing...");
     
-    // Start Matrix-effekten
-    if(document.getElementById('matrix-bg')) drawMatrix();
-    
-    // Fyll Matrix-låsen med nuller
+    // Initialiser Matrix Bakgrunn (Hvis den finnes)
+    canvas = document.getElementById('matrix-bg');
+    if (canvas) {
+        ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const columns = canvas.width / fontSize;
+        drops = Array(Math.floor(columns)).fill(1);
+        drawMatrix();
+    }
+
+    // Fyll Matrix-låsen (høyre panel)
     const mg = document.getElementById('matrix-grid');
     if(mg) {
+        mg.innerHTML = ''; // Tøm først for sikkerhets skyld
         for(let i=0; i<16; i++){ 
             let d = document.createElement('div'); 
             d.className = 'matrix-char'; 
@@ -33,105 +47,15 @@ window.onload = function() {
             mg.appendChild(d); 
         }
     }
-};
+});
 
-// --- START-FUNKSJON (Koblet til knappene) ---
-window.startGame = function(selectedDifficulty) {
-    console.log("StartGame clicked with difficulty: " + selectedDifficulty);
-
-    // 1. Initialiser lydmotoren NÅ (når brukeren klikker)
-    if (!audioCtx) {
-        try {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        } catch(e) {
-            console.warn("Web Audio API ikke støttet i denne nettleseren.");
-        }
-    }
-    if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
-
-    // 2. Hent navn
-    const nameInput = document.getElementById('avatar-input');
-    if(nameInput && nameInput.value.trim() !== "") agentName = nameInput.value.toUpperCase();
-    
-    const agentDisplay = document.getElementById('agent-name-display');
-    if(agentDisplay) agentDisplay.innerText = agentName;
-    
-    const winnerName = document.getElementById('winner-name');
-    if(winnerName) winnerName.innerText = agentName;
-
-    // 3. Sett spillmodus
-    difficulty = selectedDifficulty;
-    
-    // 4. Bytt skjerm
-    document.getElementById('start-screen').classList.remove('active');
-    document.getElementById('game-wrapper').style.display = 'flex';
-    
-    // 5. Start spill-loopen
-    startTimer(); 
-    updateUI(); 
-    updateLockVisuals(true); 
-    generateQuestion();
-    
-    // 6. Sett fokus
-    setTimeout(() => {
-        const input = document.getElementById('user-input');
-        if(input) input.focus();
-    }, 100);
-
-    // 7. Start random events
-    startFirewallLoop();
-};
-
-// --- AUDIO MOTOR ---
-function playSound(type) {
-    if (!audioCtx) return; // Ingen lyd hvis context ikke finnes
-    
-    const osc = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    osc.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    const now = audioCtx.currentTime;
-    
-    if (type === 'type') { 
-        osc.type = 'square'; osc.frequency.setValueAtTime(800, now);
-        gainNode.gain.setValueAtTime(0.05, now); osc.start(now); osc.stop(now + 0.05);
-    } else if (type === 'correct') { 
-        osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
-        gainNode.gain.setValueAtTime(0.2, now); gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3); osc.start(now); osc.stop(now + 0.3);
-    } else if (type === 'wrong') { 
-        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.linearRampToValueAtTime(100, now + 0.2);
-        gainNode.gain.setValueAtTime(0.2, now); gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3); osc.start(now); osc.stop(now + 0.3);
-    } else if (type === 'alarm') { 
-        osc.type = 'square'; osc.frequency.setValueAtTime(800, now); osc.frequency.linearRampToValueAtTime(600, now + 0.1);
-        gainNode.gain.setValueAtTime(0.3, now); osc.start(now); osc.stop(now + 0.2);
-    } else if (type === 'win') { 
-        osc.type = 'triangle'; osc.frequency.setValueAtTime(300, now); osc.frequency.linearRampToValueAtTime(600, now + 0.2);
-        gainNode.gain.setValueAtTime(0.2, now); gainNode.gain.linearRampToValueAtTime(0, now + 1.5); osc.start(now); osc.stop(now + 1.5);
-    }
-}
-
-// --- MATRIX BAKGRUNN ---
-const canvas = document.getElementById('matrix-bg');
-let ctx;
-let drops = [];
-const letters = "0101XYHAZK"; 
-const fontSize = 16;
-let matrixColor = "#00ff41"; 
-
-if (canvas) {
-    ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth; 
-    canvas.height = window.innerHeight;
-    const columns = canvas.width / fontSize;
-    drops = Array(Math.floor(columns)).fill(1);
-}
-
+// --- MATRIX EFFEKT ---
 function drawMatrix() {
     if (!ctx) return;
-    ctx.fillStyle = "rgba(0, 0, 0, 0.05)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = matrixColor; ctx.font = fontSize + "px monospace";
+    ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = matrixColor;
+    ctx.font = fontSize + "px monospace";
     for (let i = 0; i < drops.length; i++) {
         const text = letters[Math.floor(Math.random() * letters.length)];
         ctx.fillText(text, i * fontSize, drops[i] * fontSize);
@@ -141,11 +65,71 @@ function drawMatrix() {
     requestAnimationFrame(drawMatrix);
 }
 
+// --- HOVEDFUNKSJON: START SPILLET ---
+// Denne gjøres eksplisitt global slik at HTML-knappen finner den
+window.startGame = function(selectedDifficulty) {
+    try {
+        console.log("Starting game...");
+        
+        // 1. Skjul startskjerm med en gang (så vi ser respons)
+        const startScreen = document.getElementById('start-screen');
+        const gameWrapper = document.getElementById('game-wrapper');
+        
+        if (startScreen) startScreen.classList.remove('active');
+        else alert("Feil: Finner ikke start-skjermen (id='start-screen')");
+        
+        if (gameWrapper) gameWrapper.style.display = 'flex';
+        else alert("Feil: Finner ikke spill-området (id='game-wrapper')");
+
+        // 2. Start lydmotoren (Må skje etter brukerinteraksjon)
+        if (!audioCtx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (AudioContext) {
+                audioCtx = new AudioContext();
+            }
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        // 3. Hent spillernavn
+        const nameInput = document.getElementById('avatar-input');
+        if (nameInput && nameInput.value.trim() !== "") {
+            agentName = nameInput.value.toUpperCase();
+        }
+        
+        // Oppdater navn i UI
+        const displayIds = ['agent-name-display', 'winner-name'];
+        displayIds.forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.innerText = agentName;
+        });
+
+        // 4. Sett variabler og start
+        difficulty = selectedDifficulty;
+        startTimer(); 
+        updateUI(); 
+        updateLockVisuals(true); 
+        generateQuestion();
+        
+        // 5. Fokus på input-feltet
+        const input = document.getElementById('user-input');
+        if(input) input.focus();
+
+        // 6. Start brannmur-loopen
+        startFirewallLoop();
+
+    } catch (error) {
+        alert("En feil oppstod under oppstart: " + error.message);
+        console.error(error);
+    }
+};
+
 // --- HJELPEFUNKSJONER ---
 function getNum(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 function getVar() { return vars[Math.floor(Math.random() * vars.length)]; }
 
-// --- NY MATEMATIKKMOTOR ---
+// --- GENERER OPPGAVE ---
 function generateQuestion() {
     isDebugTask = false;
     const hintText = document.getElementById('hint-text');
@@ -234,7 +218,7 @@ function generateQuestion() {
             case 5: // Likninger med x på begge sider eller divisjon
                 let ans = getNum(3, 12);
                 if (type === 1) { let c1=getNum(3,5); let c2=getNum(1,2); let diff=c1-c2; let rest=(c1*ans)-(c2*ans); q=`Finn ${v}: <b>${c1}${v} = ${c2}${v} + ${rest}</b>`; a=ans; }
-                else if (type === 2) { let add=getNum(10,30); q=`Finn ${v}: <b>${v}/2 + 5 = ${ans/2 + 5}</b> (Hint: Svaret er ${ans})`; a=ans; }
+                else if (type === 2) { let add=getNum(10,30); q=`Finn ${v}: <b>${v}/2 + 5 = ${ans/2 + 5}</b> (Hint: Svaret er ${ans})`; a=ans; } // Forenklet for input
                 else if (type === 3) { let fac=getNum(2,4); let sub=getNum(5,15); q=`Finn ${v}: <b>${fac}${v} - ${sub} = ${fac*ans - sub}</b>`; a=ans; }
                 else { let tot = ans + 10; q = `Jeg tenker på et tall. Hvis jeg legger til 10 får jeg ${tot}. Hva er tallet?`; a = ans; }
                 break;
@@ -245,7 +229,7 @@ function generateQuestion() {
     const qt = document.getElementById('question-text');
     if(qt) {
         qt.innerHTML = q;
-        qt.style.color = "#00ff41"; // Reset farge fra debug-mode
+        qt.style.color = "#00ff41"; 
     }
 }
 
@@ -283,10 +267,10 @@ window.useHint = function() {
     let hint = "";
     
     if (isDebugTask) {
-        hint = "Sett inn 'Systemet beregnet' tallet i likningen. Stemmer det? Nei. Regn ut selv.";
+        hint = "Regn ut likningen selv. Ikke stol på 'Systemet'.";
     } else if (difficulty === 1) {
         if(currentLevel <= 2) hint = "Bytt ut bokstaven med tallet som er oppgitt.";
-        else if(currentLevel === 5) hint = "Tenk: Hvilket tall må stå i stedet for bokstaven for at svaret skal bli riktig?";
+        else if(currentLevel === 5) hint = "Hvilket tall må stå i stedet for bokstaven for å få rett svar?";
         else hint = "Følg reglene: Ganging gjøres før pluss og minus.";
     } else {
         hint = "Husk fortegnsregler: Minus ganger minus blir pluss.";
@@ -304,16 +288,10 @@ window.checkAnswer = function() {
     const inputField = document.getElementById('user-input');
     let userVal = parseInt(inputField.value);
     
-    if (isNaN(userVal)) {
-        // Enkel sjekk for tom input
-        inputField.focus();
-        return;
-    }
+    if (isNaN(userVal)) { inputField.focus(); return; }
 
     if (userVal === currentAnswer) {
-        playSound('correct'); 
-        tasksSolved++; 
-        combo++;
+        playSound('correct'); tasksSolved++; combo++;
         
         if (combo >= 3) { 
             document.body.classList.add('combo-mode'); 
@@ -324,14 +302,11 @@ window.checkAnswer = function() {
 
         animateLock();
         
-        if (tasksSolved >= tasksPerLevel) {
-            nextLevel();
-        } else {
-            setTimeout(generateQuestion, 1000);
-        }
+        if (tasksSolved >= tasksPerLevel) nextLevel();
+        else setTimeout(generateQuestion, 1000);
+
     } else {
-        playSound('wrong'); 
-        combo = 0; 
+        playSound('wrong'); combo = 0; 
         document.body.classList.remove('combo-mode'); 
         const comboBadge = document.getElementById('combo-badge');
         if(comboBadge) comboBadge.style.display = 'none'; 
@@ -340,44 +315,32 @@ window.checkAnswer = function() {
         inputField.classList.add('shake'); 
         setTimeout(() => inputField.classList.remove('shake'), 500);
     }
-    inputField.value = ""; 
-    inputField.focus(); 
-    updateUI();
+    inputField.value = ""; inputField.focus(); updateUI();
 }
 
+// --- NESTE NIVÅ ---
 function nextLevel() {
     playSound('win');
     const lockText = document.getElementById('lock-status-text');
-    if(lockText) {
-        lockText.innerText = "ACCESS GRANTED";
-        lockText.style.color = "#00ff41";
-    }
+    if(lockText) { lockText.innerText = "ACCESS GRANTED"; lockText.style.color = "#00ff41"; }
     
     setTimeout(() => {
-        currentLevel++; 
-        tasksSolved = 0; 
-        combo = 0; 
-        document.body.classList.remove('combo-mode'); 
-        matrixColor = "#00ff41";
+        currentLevel++; tasksSolved = 0; combo = 0; 
+        document.body.classList.remove('combo-mode'); matrixColor = "#00ff41";
         
         if (currentLevel > maxLevels) { 
             document.getElementById('game-wrapper').style.display = 'none'; 
             document.getElementById('victory').classList.add('active'); 
         } else { 
-            updateLockVisuals(true); 
-            generateQuestion(); 
-            updateUI(); 
+            updateLockVisuals(true); generateQuestion(); updateUI(); 
         }
     }, 2000);
 }
 
-// --- VISUELLE EFFEKTER & LÅSER ---
+// --- LÅS-ANIMASJONER ---
 function animateLock() {
     const ls = document.getElementById('lock-status-text'); 
-    if(ls) {
-        ls.innerText = "DEKRYPTERER..."; 
-        ls.style.color = "yellow";
-    }
+    if(ls) { ls.innerText = "DEKRYPTERER..."; ls.style.color = "yellow"; }
 
     if (currentLevel === 1) { 
         const screen = document.getElementById('keypad-screen');
@@ -421,10 +384,7 @@ function updateLockVisuals(reset) {
     
     if(reset) {
         const status = document.getElementById('lock-status-text');
-        if(status) {
-            status.innerText = "LÅST"; 
-            status.style.color = "red";
-        }
+        if(status) { status.innerText = "LÅST"; status.style.color = "red"; }
         document.querySelectorAll('.led').forEach(l=>l.classList.remove('on'));
         document.querySelectorAll('.hacked').forEach(h=>h.classList.remove('hacked'));
         document.querySelectorAll('.matrix-char').forEach(c=>c.classList.remove('active'));
@@ -432,7 +392,36 @@ function updateLockVisuals(reset) {
     }
 }
 
-// --- BRANNMUR ---
+// --- LYD ---
+function playSound(type) {
+    if (!audioCtx) return;
+    try {
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+        
+        if (type === 'type') { 
+            osc.type = 'square'; osc.frequency.setValueAtTime(800, now);
+            gainNode.gain.setValueAtTime(0.05, now); osc.start(now); osc.stop(now + 0.05);
+        } else if (type === 'correct') { 
+            osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+            gainNode.gain.setValueAtTime(0.2, now); gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3); osc.start(now); osc.stop(now + 0.3);
+        } else if (type === 'wrong') { 
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+            gainNode.gain.setValueAtTime(0.2, now); gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3); osc.start(now); osc.stop(now + 0.3);
+        } else if (type === 'alarm') { 
+            osc.type = 'square'; osc.frequency.setValueAtTime(800, now); osc.frequency.linearRampToValueAtTime(600, now + 0.1);
+            gainNode.gain.setValueAtTime(0.3, now); osc.start(now); osc.stop(now + 0.2);
+        } else if (type === 'win') { 
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(300, now); osc.frequency.linearRampToValueAtTime(600, now + 0.2);
+            gainNode.gain.setValueAtTime(0.2, now); gainNode.gain.linearRampToValueAtTime(0, now + 1.5); osc.start(now); osc.stop(now + 1.5);
+        }
+    } catch(e) { console.warn("Lydfeil:", e); }
+}
+
+// --- BRANNMUR & UI & TIMER ---
 let fwTimer;
 function startFirewallLoop() {
     setInterval(() => { 
@@ -442,82 +431,28 @@ function startFirewallLoop() {
 }
 
 function triggerFirewall() {
-    playSound('alarm'); 
-    matrixColor = "red";
-    
-    const modal = document.getElementById('firewall-modal'); 
-    const taskEl = document.getElementById('firewall-task'); 
-    const input = document.getElementById('firewall-input'); 
-    const bar = document.getElementById('fw-timer-bar');
-    
+    playSound('alarm'); matrixColor = "red";
+    const modal = document.getElementById('firewall-modal'); const taskEl = document.getElementById('firewall-task'); const input = document.getElementById('firewall-input'); const bar = document.getElementById('fw-timer-bar');
     if(!modal) return;
-
-    let n1 = getNum(5, 15), n2 = getNum(5, 15); 
-    taskEl.innerText = `${n1} + ${n2}`;
-    modal.style.display = 'flex'; 
-    input.value = ""; 
-    input.focus();
-    
-    bar.style.width = "100%"; 
-    let width = 100;
-    
-    fwTimer = setInterval(() => { 
-        width -= 1; 
-        bar.style.width = width + "%"; 
-        if (width <= 0) { 
-            clearInterval(fwTimer); 
-            modal.style.display = 'none'; 
-            timeLeft -= 60; 
-            playSound('wrong'); 
-            matrixColor = "#00ff41"; 
-            alert("BRANNMUR BRØT GJENNOM! -60 sekunder."); 
-        } 
-    }, 100);
-    
-    window.checkFirewall = function() { 
-        if (parseInt(input.value) === (n1 + n2)) { 
-            clearInterval(fwTimer); 
-            modal.style.display = 'none'; 
-            playSound('correct'); 
-            matrixColor = document.body.classList.contains('combo-mode') ? "#ffcc00" : "#00ff41"; 
-            const mainInput = document.getElementById('user-input');
-            if(mainInput) mainInput.focus(); 
-        } else {
-            input.style.borderColor = "red"; 
-        }
-    }
+    let n1 = getNum(5, 15), n2 = getNum(5, 15); taskEl.innerText = `${n1} + ${n2}`;
+    modal.style.display = 'flex'; input.value = ""; input.focus();
+    bar.style.width = "100%"; let width = 100;
+    fwTimer = setInterval(() => { width -= 1; bar.style.width = width + "%"; if (width <= 0) { clearInterval(fwTimer); modal.style.display = 'none'; timeLeft -= 60; playSound('wrong'); matrixColor = "#00ff41"; alert("BRANNMUR BRØT GJENNOM! -60 sekunder."); } }, 100);
+    window.checkFirewall = function() { if (parseInt(input.value) === (n1 + n2)) { clearInterval(fwTimer); modal.style.display = 'none'; playSound('correct'); matrixColor = document.body.classList.contains('combo-mode') ? "#ffcc00" : "#00ff41"; const mainInput = document.getElementById('user-input'); if(mainInput) mainInput.focus(); } else input.style.borderColor = "red"; }
 }
 window.handleFirewallEnter = function(e) { if(e.key === 'Enter') checkFirewall(); }
 
-// --- UI & TIMER ---
 window.handleEnter = function(e) { if(e.key === 'Enter') checkAnswer(); else playSound('type'); }
-
 function updateUI() { 
-    const sub = document.getElementById('sub-progress-text');
-    if(sub) sub.innerText = `${tasksSolved}/${tasksPerLevel}`; 
-    
-    const lvl = document.getElementById('level-indicator');
-    if(lvl) lvl.innerText = `Nivå: ${currentLevel}/${maxLevels}`; 
-    
-    const fill = document.getElementById('progress-fill');
-    if(fill) {
-        let totalProgress = ((currentLevel - 1) / maxLevels) * 100;
-        fill.style.width = totalProgress + "%";
-    }
+    const sub = document.getElementById('sub-progress-text'); if(sub) sub.innerText = `${tasksSolved}/${tasksPerLevel}`; 
+    const lvl = document.getElementById('level-indicator'); if(lvl) lvl.innerText = `Nivå: ${currentLevel}/${maxLevels}`; 
+    const fill = document.getElementById('progress-fill'); if(fill) { let totalProgress = ((currentLevel - 1) / maxLevels) * 100; fill.style.width = totalProgress + "%"; }
 }
-
 function startTimer() {
     timerInterval = setInterval(() => {
-        let m = Math.floor(timeLeft / 60); 
-        let s = timeLeft % 60;
-        const tEl = document.getElementById('timer');
-        if(tEl) tEl.innerText = `${m}:${s < 10 ? '0'+s : s}`;
-        
-        if (timeLeft <= 0) { 
-            clearInterval(timerInterval); 
-            alert("TIDEN ER UTE!"); 
-            location.reload(); 
-        }
+        let m = Math.floor(timeLeft / 60); let s = timeLeft % 60;
+        const tEl = document.getElementById('timer'); if(tEl) tEl.innerText = `${m}:${s < 10 ? '0'+s : s}`;
+        if (timeLeft <= 0) { clearInterval(timerInterval); alert("TIDEN ER UTE!"); location.reload(); }
         timeLeft--;
     }, 1000);
 }
